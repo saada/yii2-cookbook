@@ -58,14 +58,14 @@ class CarQuery extends ActiveQuery
 }
 ```
 
-Now let's create models for car classes for different types. First `models/SportCar.php`:
+Now let's setup our base `models/Car.php`:
 
 ```php
 namespace app\models;
 
-class SportCar extends Car
+class Car extends ActiveRecord
 {
-    const TYPE = 'sport';
+    const TYPE = '*';
 
     public static function find()
     {
@@ -77,6 +77,30 @@ class SportCar extends Car
         $this->type = self::TYPE;
         return parent::beforeSave($insert);
     }
+    
+    // Now we need to override `instantiate`:
+    public static function instantiate($row)
+    {
+        switch ($row['type']) {
+            case SportCar::TYPE:
+                return new SportCar();
+            case HeavyCar::TYPE:
+                return new HeavyCar();
+            default:
+               return new self;
+        }
+    }
+}
+```
+
+Now let's create models for car classes for different types. First `models/SportCar.php`:
+
+```php
+namespace app\models;
+
+class SportCar extends Car
+{
+    const TYPE = 'sport';
 }
 ```
 
@@ -88,33 +112,6 @@ namespace app\models;
 class HeavyCar extends Car
 {
     const TYPE = 'heavy';
-
-    public static function find()
-    {
-        return new CarQuery(get_called_class(), ['type' => self::TYPE]);
-    }
-
-    public function beforeSave($insert)
-    {
-        $this->type = self::TYPE;
-        return parent::beforeSave($insert);
-    }
-}
-```
-
-Now we need to override `instantiate` method in the `Car` model:
-
-```php
-public static function instantiate($row)
-{
-    switch ($row['type']) {
-        case SportCar::TYPE:
-            return new SportCar();
-        case HeavyCar::TYPE:
-            return new HeavyCar();
-        default:
-           return new self;
-    }
 }
 ```
 
